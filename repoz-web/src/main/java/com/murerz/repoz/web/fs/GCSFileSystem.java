@@ -3,6 +3,9 @@ package com.murerz.repoz.web.fs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -17,6 +20,8 @@ import com.murerz.repoz.web.util.XMLQuery;
 
 public class GCSFileSystem implements FileSystem {
 
+	private static final String X_GOOG_META_X = "x-goog-meta-p-";
+
 	public RepozFile read(String path) {
 		try {
 			HttpRequestFactory factory = GCSHandler.me().getFactory();
@@ -29,14 +34,31 @@ public class GCSFileSystem implements FileSystem {
 			}
 			String type = resp.getContentType();
 			String charset = resp.getContentEncoding();
+
+			Map<String, String> params = parseParams(resp);
+
 			StreamRepozFile ret = new StreamRepozFile().setIn(resp.getContent());
 			ret.setPath(path);
 			ret.setMediaType(type);
 			ret.setCharset(charset);
+			ret.setParams(params);
 			return ret;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private Map<String, String> parseParams(HttpResponse resp) {
+		HashMap<String, String> params = new HashMap<String, String>();
+		Set<String> paramNames = resp.getHeaders().keySet();
+		for (String paramName : paramNames) {
+			if (paramName.toLowerCase().startsWith(X_GOOG_META_X)) {
+				String name = paramName.substring(X_GOOG_META_X.length());
+				String value = resp.getHeaders().getFirstHeaderStringValue(paramName);
+				params.put(name, value);
+			}
+		}
+		return params;
 	}
 
 	public void save(RepozFile file) {
@@ -46,6 +68,10 @@ public class GCSFileSystem implements FileSystem {
 			String contentType = file.getContentType();
 			InputStreamContent content = new InputStreamContent(contentType, file.getIn());
 			HttpRequest req = factory.buildPutRequest(url, content);
+			Set<Entry<String, String>> params = file.getParams().entrySet();
+			for (Entry<String, String> entry : params) {
+				req.getHeaders().set(X_GOOG_META_X + entry.getKey(), entry.getValue());
+			}
 			executeCheck(req, 200);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -111,7 +137,7 @@ public class GCSFileSystem implements FileSystem {
 		try {
 			HttpRequestFactory factory = GCSHandler.me().getFactory();
 			String base = Config.me().getGoogleCloudStorageBase();
-			if(base.length() > 0) {
+			if (base.length() > 0) {
 				base += "/";
 			}
 			GenericUrl url = GCSHandler.me().createListURL("/?delimiter=/&prefix=" + base + sb);
@@ -128,7 +154,7 @@ public class GCSFileSystem implements FileSystem {
 		try {
 			HttpRequestFactory factory = GCSHandler.me().getFactory();
 			String base = Config.me().getGoogleCloudStorageBase();
-			if(base.length() > 0) {
+			if (base.length() > 0) {
 				base += "/";
 			}
 			GenericUrl url = GCSHandler.me().createListURL("/?prefix=" + base + sb);
@@ -150,7 +176,7 @@ public class GCSFileSystem implements FileSystem {
 			for (int i = 0; i < list.size(); i++) {
 				String path = list.get(i).getContent();
 				path = path.replaceAll("/+$", "");
-				if(base.length() > 0) {
+				if (base.length() > 0) {
 					path = path.substring(base.length());
 				}
 				ret.add("/" + path);

@@ -3,6 +3,7 @@ package com.murerz.repoz.web;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -14,6 +15,7 @@ import com.murerz.repoz.web.fs.FileSystem;
 import com.murerz.repoz.web.fs.FileSystemFactory;
 import com.murerz.repoz.web.fs.RepozFile;
 import com.murerz.repoz.web.fs.StreamRepozFile;
+import com.murerz.repoz.web.util.CTX;
 import com.murerz.repoz.web.util.RepozUtil;
 import com.murerz.repoz.web.util.ServletUtil;
 import com.murerz.repoz.web.util.Util;
@@ -49,6 +51,9 @@ public class RepoServlet extends HttpServlet {
 			if (charset != null) {
 				resp.setCharacterEncoding(charset);
 			}
+
+			Map<String, String> params = file.getParams();
+			ServletUtil.setHeaders(resp, "X-Repoz-Param-", params);
 
 			in = file.getIn();
 			OutputStream out = resp.getOutputStream();
@@ -91,6 +96,10 @@ public class RepoServlet extends HttpServlet {
 		InputStream in = req.getInputStream();
 
 		RepozFile file = new StreamRepozFile().setIn(in).setPath(path).setMediaType(mediaType).setCharset(charset);
+		
+		Map<String, String> params = ServletUtil.headers(req, "X-Repoz-Param-");
+		file.setParams(params);
+		file.setParam("username", CTX.getAsString("username"));
 
 		fs.save(file);
 	}
