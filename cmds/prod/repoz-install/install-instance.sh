@@ -78,7 +78,7 @@ source /etc/bash.bashrc.repoz
 java -version
 
 ############
-sudo a2enmod proxy proxy_http ssl headers
+sudo a2enmod proxy proxy_http ssl headers rewrite
 sudo htpasswd -bc /etc/apache2/passwd root "$REPOZ_PASSWORD"
 
 sudo rm /etc/apache2/sites-enabled/000-default
@@ -90,15 +90,19 @@ sudo tee /etc/apache2/sites-available/repoz <<-EOF
     Require user root
 </Location>
 <VirtualHost *:80>
+    RewriteEngine on
+    RewriteRule ^/repoz/access - [F]
+    RewriteRule ^/repoz/panel\.html https://%{HTTP_HOST}/repoz/panel.html
+
     <Location /repoz>
         ProxyPass http://localhost:8080/repoz
         ProxyPassReverse http://localhost:8080/repoz
         RequestHeader unset Authorization
         RequestHeader set X-Repoz-Schema "http"
     </Location>
-    <Location /repozhttp>
-        ProxyPass http://localhost:8080/repoz
-        ProxyPassReverse http://localhost:8080/repoz
+    <Location /repozix/r>
+        ProxyPass http://localhost:8080/repoz/r
+        ProxyPassReverse http://localhost:8080/repoz/r
         RequestHeader set X-Repoz-Schema "http"
     </Location>
 
@@ -120,6 +124,11 @@ EOF
 sudo tee /etc/apache2/sites-available/repoz-ssl <<-EOF
 <IfModule mod_ssl.c>
 <VirtualHost _default_:443>
+    RewriteEngine on
+    RewriteRule ^/repoz/docs\.html http://%{HTTP_HOST}/repoz/docs.html
+    RewriteRule ^/repoz/index\.html http://%{HTTP_HOST}/repoz/index.html
+    RewriteRule ^/repoz/$ http://%{HTTP_HOST}/repoz/
+
     <Location /repoz>
         ProxyPass http://localhost:8080/repoz
         ProxyPassReverse http://localhost:8080/repoz
