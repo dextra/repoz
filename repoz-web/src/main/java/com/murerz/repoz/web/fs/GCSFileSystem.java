@@ -15,6 +15,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.InputStreamContent;
 import com.murerz.repoz.web.meta.Config;
+import com.murerz.repoz.web.util.RepozUtil;
 import com.murerz.repoz.web.util.Util;
 import com.murerz.repoz.web.util.XMLQuery;
 
@@ -72,9 +73,18 @@ public class GCSFileSystem implements FileSystem {
 			for (Entry<String, String> entry : params) {
 				req.getHeaders().set(X_GOOG_META_X + entry.getKey(), entry.getValue());
 			}
-			executeCheck(req, 200);
+			executeCheckAndClose(req, 200);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private void executeCheckAndClose(HttpRequest req, int... codes) {
+		HttpResponse resp = null;
+		try {
+			resp = executeCheck(req, codes);
+		} finally {
+			RepozUtil.close(resp);
 		}
 	}
 
@@ -115,7 +125,7 @@ public class GCSFileSystem implements FileSystem {
 			GenericUrl url = GCSHandler.me().createURL(path);
 			HttpRequest req = factory.buildDeleteRequest(url);
 			req.setThrowExceptionOnExecuteError(false);
-			executeCheck(req, 204, 404);
+			executeCheckAndClose(req, 204, 404);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -197,6 +207,35 @@ public class GCSFileSystem implements FileSystem {
 		String ret = sb.toString();
 		ret = ret.replaceAll("^/+", "");
 		return ret;
+	}
+
+	public MetaFile head(String path) {
+		HttpResponse resp = null;
+		try {
+			HttpRequestFactory factory = GCSHandler.me().getFactory();
+			GenericUrl url = GCSHandler.me().createURL(path);
+			HttpRequest req = factory.buildHeadRequest(url);
+			req.setThrowExceptionOnExecuteError(false);
+			resp = executeCheck(req, 200, 404);
+			if (resp.getStatusCode() == 404) {
+				return null;
+			}
+			String type = resp.getContentType();
+			String charset = resp.getContentEncoding();
+
+			Map<String, String> params = parseParams(resp);
+
+			MetaFile ret = new MetaFile();
+			ret.setPath(path);
+			ret.setMediaType(type);
+			ret.setCharset(charset);
+			ret.setParams(params);
+			return ret;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} finally {
+			RepozUtil.close(resp);
+		}
 	}
 
 }
