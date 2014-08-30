@@ -7,6 +7,6 @@ before_script:
 install: 
   - ./cmds/ci/install.sh
 script:
-  - "mvn test -B -Dit -Drepoz.gcs.bucket=repoz-test-travisci"
+  - mvn test -B -Dit -Drepoz.gcs.bucket=repoz-test-travisci && ./cmds/prod/update-ci.sh
 env:
 
