@@ -9,5 +9,5 @@ install:
 script:
   - mvn test -B -Dit -Drepoz.gcs.bucket=repoz-test-travisci && ./cmds/prod/update-ci.sh
 env:
-	secure: rTw0gxEh2hp7vCUDlLIKIf54E2qKdFKqr//o75smRu2kRgW0SEiq6bK8DobmsMrPQpKCf7n8jj2/ACyNibvXY3938/O48+mCJfxNXJZc45t7GRzA4P27daFE+qQc6CuBHzB+wJXGAt4fVCbHYKBOjggCDkzu8gTxTAKk+uNy+3jJMHV9J3Z9Ckm59sbbBx2lyvlF/QWQrmvKGFJ3ygPctYsVoh/AL5WcTz2jVoSMoZSDCKX55ypeNLxaSZRSF/9PsLdFFcSYD8qkj1y/Yd1aa2I7Con2zHcp1uab7zwAdDyLQ77eXfUFI4aQuc5sDSxSgXbWl68nSNZWC8g3BkjTAA==
+  secure: sdSEIygWYFOy0Tnl9jEfpG/ZFML+IyEOJITN1Z8mPlhvs54eDbiCTuYeCTHT16DNC9fhygCOGx851d/7TYR2yZyra2tveal11vyWtdrWp7qByKW7/PhvIC2FfxH5bVwO5qKOSMiZa8THVLUs/otDAinWHU3KhbqLmnHmS669SCjmqQF37zq4fGKJOUO58ZKnc1SQLAgsLpsG1VbR+qsU2o5uAyoXDojs2pO+LIyrkZm6WasDWaS4cLomwipwrHNSGmv9UlPXj+P+D3OqsZsEAHXPBqyvXi9BNOrz+CPE6yh1BGwm7nVyDY85DOLot5dv0Wv52fSiI2mEswes4L/KnA==
 
