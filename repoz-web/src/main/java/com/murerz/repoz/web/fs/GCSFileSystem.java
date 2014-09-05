@@ -224,7 +224,7 @@ public class GCSFileSystem implements FileSystem {
 			}
 			String type = resp.getContentType();
 			String charset = resp.getContentEncoding();
-			String length = Util.str(resp.getHeaders().getFirstHeaderStringValue("Content-Length"));
+			String length = Util.str(resp.getHeaders().getFirstHeaderStringValue("content-length"));
 
 			Map<String, String> params = parseParams(resp);
 
